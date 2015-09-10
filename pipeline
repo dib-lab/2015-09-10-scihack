@@ -42,6 +42,7 @@ def main():
     for key, row in sample_df.iterrows():
         tasks.append(get_sample_randomly_task(os.path.join(args.data_dir, row.filename),
                                               row.label + '.fq', 1000000))
+        tasks.append(get_gzip_task(row.label + '.fq'))
 
     if args.print_tasks:
         for task in tasks:

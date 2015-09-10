@@ -43,4 +43,14 @@ def get_sample_randomly_task(sample_fn, target_fn, n_reads):
             'targets': [target_fn],
             'clean': [clean_targets]}
 
+@create_task_object
+def get_gzip_task(fn):
+
+    cmd = 'gzip {fn}'.format(fn=fn)
+
+    return {'name': 'gzip:' + os.path.basename(fn),
+            'actions': [cmd],
+            'file_dep': [fn],
+            'targets': [fn + '.gz'],
+            'clean': [clean_targets]}
 
