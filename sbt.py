@@ -46,7 +46,10 @@ then define a search function, ::
 """
 
 import random
+import json
+
 import khmer
+from khmer import khmer_args
 
 class GraphFactory(object):
     "Build new nodegraphs (Bloom filters) of a specific (fixed) size."
@@ -57,7 +60,7 @@ class GraphFactory(object):
         self.n_tables = n_tables
 
     def create_nodegraph(self):
-        return Nodegraph(self.ksize, self.starting_size, self.n_tables)
+        return khmer.Nodegraph(self.ksize, self.starting_size, self.n_tables)
 
 
 class Node(object):
@@ -125,6 +128,79 @@ class Leaf(object):
             return [self]
         return []
 
+def print_sbt(node):
+
+    if type(node) is Leaf:
+        print 'Leaf:', node.metadata, node.graph.n_occupied()
+
+    else:
+        print 'Internal node:', node.children, node.graph.n_occupied()
+        print_sbt(node.subnodes[0])
+        print_sbt(node.subnodes[1])
+
+def node_name(node, tag):
+    if type(node) is Leaf:
+        name = node.metadata
+    else:
+        name = str(id(node))
+    return '.'.join([tag, name, 'sbt'])
+
+def save_node(node, structure, tag):
+
+    name = node_name(node, tag)
+    node.graph.save(name)
+    structure['name'] = name
+
+    if type(node) is Leaf:
+
+        structure['metadata'] = node.metadata
+
+    else:
+        
+        structure['left'] = {}
+        save_node(node.subnodes[0], structure['left'], tag)
+        structure['right'] = {}
+        save_node(node.subnodes[1], structure['right'], tag)
+
+def save_sbt(root_node, tag):
+
+    structure = {'root': {}}
+    save_node(root_node, structure['root'], tag)
+    structure['size'] = 0
+
+    fn = tag + '.sbt.json'
+    with open(fn, 'wb') as fp:
+        json.dump(structure, fp)
+
+    return fn
+
+def load_sbt(sbt_fn):
+
+    with open(sbt_fn) as fp:
+       sbt_dict = json.load(fp)
+
+    ksize, tablesize, ntables, _, _, _ = khmer.extract_nodegraph_info(sbt_dict['root']['name'])
+    factory = GraphFactory(ksize, tablesize, ntables)
+
+    tree = load_node(sbt_dict['root'], factory)
+
+    return tree
+
+def load_node(node_dict, factory):
+
+    graph = khmer.load_nodegraph(node_dict['name'])
+
+    if 'metadata' in node_dict: # must be a leaf
+        return Leaf(node_dict['metadata'], graph)
+        
+    else:
+        node = Node(factory)
+        left = node_dict['left']
+        node.subnodes.append(load_node(left, factory))
+        right = node_dict['right']
+        node.subnodes.append(load_node(right, factory))
+        node.children = 2
+        return node
 
 def test_simple():
     factory = GraphFactory(5, [101, 103, 117])

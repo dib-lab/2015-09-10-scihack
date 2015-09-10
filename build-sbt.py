@@ -31,8 +31,8 @@ def main():
 
     parser = khmer_args.build_nodegraph_args()
     parser.add_argument('--samples', nargs='+')
-    parser.add_argument('--search')
-    parser.add_argument('--threshold', type=float, default=0.8)
+    parser.add_argument('--save-prefix')
+    parser.add_argument('--print-tree', action='store_true', default=False)
     args = parser.parse_args()
 
     factory = NodegraphFactory(args)
@@ -47,9 +47,12 @@ def main():
         root.add_node(leaf)
         print '--- Done with', sample_fn
 
-    for record in screed.open(args.search):
-        print '---\n', record.name
-        print [x.metadata for x in root.find(search_sequence, record.sequence, args.threshold)]
+    print '\n*** Saving to disk'
+    fn = sbt.save_sbt(root, args.save_prefix)
+    print '--- Save to', fn
+
+    if args.print_tree:
+        sbt.print_sbt(root)
 
 if __name__ == '__main__':
     main()
