@@ -58,7 +58,7 @@ def get_gzip_task(fn):
 def download_task(url, target_fn, label='default'):
 
     cmd = 'curl -o {target_fn} {url}'.format(**locals())
-    name = '_'.join(['download_gunzip', target_fn, label])
+    name = 'download_gunzip:' + target_fn
 
     return {'title': title_with_actions,
             'name': name,
