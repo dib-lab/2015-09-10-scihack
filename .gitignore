@@ -1,0 +1,6 @@
+*.fq
+*.pyc
+
+*.db.dat
+*.db.bak
+*.db.dir
