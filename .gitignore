@@ -1,4 +1,5 @@
 *.fq
+*.fq.gz
 *.pyc
 
 *.db.dat
