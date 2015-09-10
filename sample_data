@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import argparse
+import pprint
+
+from doit.cmd_base import TaskLoader
+from doit.doit_cmd import DoitMain
+import pandas as pd
+
+from tasks import *
+
+def run_tasks(tasks, args, config={'verbosity': 2}):
+    
+    if type(tasks) is not list:
+        raise TypeError('tasks must be a list')
+   
+    class Loader(TaskLoader):
+        @staticmethod
+        def load_tasks(cmd, opt_values, pos_args):
+            return tasks, config
+   
+    DoitMain(Loader()).run(args)
+
+def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', default='data.json')
+    parser.add_argument('--data-dir', default='_data')
+    parser.add_argument('--print-tasks', action='store_true', default=False)
+    args, doit_args = parser.parse_known_args()
+
+    with open(args.data, 'r') as fp:
+        print('** Using data resources found in {c}'.format(c=args.data), file=sys.stderr)
+        data = json.load(fp)
+
+    data_df = pd.DataFrame(data).transpose()
+    sample_df = data_df[data_df.meta_type == 'sample']
+
+    tasks = []
+
+    for key, row in sample_df.iterrows():
+        tasks.append(get_sample_randomly_task(os.path.join(args.data_dir, row.filename),
+                                              row.label + '.fq', 1000000))
+
+    if args.print_tasks:
+        for task in tasks:
+            print('-------\n', task)
+            pprint.pprint(task.__dict__)
+    
+    if doit_args:
+        run_tasks(tasks, doit_args)
+
+if __name__ == '__main__':
+    main()

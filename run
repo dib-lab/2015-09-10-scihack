@@ -10,6 +10,8 @@ import pandas as pd
 
 from tasks import *
 
+URL = 'https://s3-us-west-1.amazonaws.com/2015-09-10-scihack/'
+
 def run_tasks(tasks, args, config={'verbosity': 2}):
     
     if type(tasks) is not list:
@@ -40,9 +42,7 @@ def main():
     tasks = []
 
     for key, row in sample_df.iterrows():
-        tasks.append(get_sample_randomly_task(os.path.join(args.data_dir, row.filename),
-                                              row.label + '.fq', 1000000))
-        tasks.append(get_gzip_task(row.label + '.fq'))
+        tasks.append(download_task(URL + row.label + '.fq.gz', row.label + '.fq.gz'))
 
     if args.print_tasks:
         for task in tasks:

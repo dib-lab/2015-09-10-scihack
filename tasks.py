@@ -54,3 +54,15 @@ def get_gzip_task(fn):
             'targets': [fn + '.gz'],
             'clean': [clean_targets]}
 
+@create_task_object
+def download_task(url, target_fn, label='default'):
+
+    cmd = 'curl -o {target_fn} {url}'.format(**locals())
+    name = '_'.join(['download_gunzip', target_fn, label])
+
+    return {'title': title_with_actions,
+            'name': name,
+            'actions': [cmd],
+            'targets': [target_fn],
+            'clean': [clean_targets],
+            'uptodate': [run_once]}
