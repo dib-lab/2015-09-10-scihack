@@ -54,7 +54,7 @@ class GraphFactory(object):
         self.tablesizes = tablesizes
 
     def create_nodegraph(self):
-        return khmer._Hashbits(self.ksize, self.tablesizes)
+        return khmer._Nodegraph(self.ksize, self.tablesizes)
 
 
 class Node(object):
