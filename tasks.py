@@ -44,18 +44,31 @@ def get_sample_randomly_task(sample_fn, target_fn, n_reads):
             'clean': [clean_targets]}
 
 @create_task_object
-def get_gzip_task(fn):
+def get_gzip_task(fn, target_fn):
 
-    cmd = 'gzip {fn}'.format(fn=fn)
+    cmd = 'gzip -c {fn} > {target_fn}'.format(**locals())
 
     return {'name': 'gzip:' + os.path.basename(fn),
             'actions': [cmd],
             'file_dep': [fn],
-            'targets': [fn + '.gz'],
+            'targets': [target_fn],
             'clean': [clean_targets]}
 
 @create_task_object
-def download_task(url, target_fn, label='default'):
+def get_gunzip_task(fn, target_fn):
+
+    cmd = 'gunzip -c {fn} > {target_fn}'.format(**locals())
+
+    return {'name': 'gunzip:' + os.path.basename(fn),
+            'actions': [cmd],
+            'file_dep': [fn],
+            'targets': [target_fn],
+            'clean': [clean_targets]}
+
+
+
+@create_task_object
+def get_download_task(url, target_fn, label='default'):
 
     cmd = 'curl -o {target_fn} {url}'.format(**locals())
     name = 'download_gunzip:' + target_fn
