@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 A trial implementation of sequence bloom trees, Solomon & Kingsford, 2015.
 
@@ -49,12 +51,13 @@ import khmer
 class GraphFactory(object):
     "Build new nodegraphs (Bloom filters) of a specific (fixed) size."
 
-    def __init__(self, ksize, tablesizes):
+    def __init__(self, ksize, starting_size, n_tables):
         self.ksize = ksize
-        self.tablesizes = tablesizes
+        self.starting_size = starting_size
+        self.n_tables = n_tables
 
     def create_nodegraph(self):
-        return khmer._Nodegraph(self.ksize, self.tablesizes)
+        return Nodegraph(self.ksize, self.starting_size, self.n_tables)
 
 
 class Node(object):
