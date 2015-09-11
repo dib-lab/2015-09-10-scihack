@@ -1,6 +1,13 @@
 *.fq
+*.fastq
 *.fq.gz
 *.pyc
+
+*.sbt
+*.sbt.json
+
+*.swp
+*.swo
 
 *.db.dat
 *.db.bak
