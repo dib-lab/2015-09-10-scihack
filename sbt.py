@@ -169,7 +169,7 @@ def save_sbt(root_node, tag):
 
     structure = {'root': {}}
     save_node(root_node, structure['root'], tag)
-    structure['size'] = 0
+    structure['size'] = root_node.children + 1
 
     fn = tag + '.sbt.json'
     with open(fn, 'wb') as fp:

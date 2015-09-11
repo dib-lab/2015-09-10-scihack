@@ -35,6 +35,10 @@ def main():
     parser.add_argument('--print-tree', action='store_true', default=False)
     args = parser.parse_args()
 
+    if not args.save_prefix:
+        print >>sys.stderr, 'No save prefix specified! Exiting...'
+        sys.exit(1)
+
     factory = NodegraphFactory(args)
     root = sbt.Node(factory)
 
@@ -47,12 +51,12 @@ def main():
         root.add_node(leaf)
         print '--- Done with', sample_fn
 
+    if args.print_tree:
+        sbt.print_sbt(root)
+
     print '\n*** Saving to disk'
     fn = sbt.save_sbt(root, args.save_prefix)
     print '--- Save to', fn
-
-    if args.print_tree:
-        sbt.print_sbt(root)
 
 if __name__ == '__main__':
     main()
