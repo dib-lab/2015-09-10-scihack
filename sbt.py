@@ -165,9 +165,10 @@ def node_fn(node, tag):
     return '.'.join([tag, node.name, 'sbt'])
 
 def save_node(node, structure, tag):
+    dirname = '.sbt.' + tag
 
-    if not os.path.exists('.sbt.' + tag):
-        os.makedirs(".sbt." + tag)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
 
     filename = node_fn(node, tag)
     node.graph.save(filename)
@@ -178,7 +179,7 @@ def save_node(node, structure, tag):
     if type(node) is Leaf:
         structure['metadata'] = node.metadata
         fname = sha256sum(node.metadata)
-        node.graph.save(os.path.join('.sbt', fname))
+        node.graph.save(os.path.join(dirname, fname))
     else:
         f = NamedTemporaryFile(delete=False)
         node.graph.save(f.name)
@@ -188,14 +189,14 @@ def save_node(node, structure, tag):
         f.close()
 
         # move tmp file to new place
-        shutil.move(f.name, os.path.join(".sbt", fname))
+        shutil.move(f.name, os.path.join(dirname, fname))
 
         structure['left'] = {}
         save_node(node.subnodes[0], structure['left'], tag)
         structure['right'] = {}
         save_node(node.subnodes[1], structure['right'], tag)
 
-    structure['bf'] = os.path.join('.sbt', fname)
+    structure['bf'] = os.path.join(dirname, fname)
     structure['children'] = node.children
 
 
