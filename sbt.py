@@ -46,8 +46,11 @@ then define a search function, ::
 """
 
 import hashlib
-import random
 import json
+import os
+import random
+import shutil
+from tempfile import NamedTemporaryFile
 
 import khmer
 from khmer import khmer_args
@@ -73,13 +76,13 @@ class Node(object):
         self.factory = factory
         self.graph = factory.create_nodegraph()
         self.children = 0
-        
+
         if name is None:
             self.name = 'internal.' + str(Node.n_nodes)
         else:
             self.name = name
         Node.n_nodes += 1
-        
+
         self.subnodes = []
 
     def add_node(self, node):
@@ -98,7 +101,7 @@ class Node(object):
                 subn = self.subnodes[1]
 
             ## push child down one level in the tree ##
-                
+
             # remove from immediate:
             self.subnodes.remove(subn)
 
@@ -163,6 +166,9 @@ def node_fn(node, tag):
 
 def save_node(node, structure, tag):
 
+    if not os.path.exists('.sbt.' + tag):
+        os.makedirs(".sbt." + tag)
+
     filename = node_fn(node, tag)
     node.graph.save(filename)
     structure['filename'] = filename
@@ -170,11 +176,24 @@ def save_node(node, structure, tag):
     structure['children'] = node.children
 
     if type(node) is Leaf:
-
         structure['metadata'] = node.metadata
-
+        fname = sha256sum(node.metadata)
+        node.graph.save(os.path.join('.sbt', fname))
     else:
-        
+        f = NamedTemporaryFile(delete=False)
+        node.graph.save(f.name)
+
+        # sha256 of the file
+        fname = sha256sum(f.name)
+        f.close()
+
+        # move tmp file to new place
+        shutil.move(f.ame, os.path.join(".sbt", fname))
+
+    structure['bf'] = os.path.join('.sbt', fname)
+    structure['children'] = node.children
+
+    if type(node) is not Leaf:
         structure['left'] = {}
         save_node(node.subnodes[0], structure['left'], tag)
         structure['right'] = {}
@@ -210,7 +229,7 @@ def load_node(node_dict, factory):
 
     if 'metadata' in node_dict: # must be a leaf
         return Leaf(node_dict['metadata'], node_dict['name'], graph)
-        
+
     else:
         node = Node(factory)
         node.graph = graph
@@ -232,7 +251,7 @@ def test_simple():
     leaf1.graph.count('AAAAA')
     leaf1.graph.count('AAAAT')
     leaf1.graph.count('AAAAC')
-    
+
     leaf2 = Leaf("b", factory.create_nodegraph())
     leaf2.graph.count('AAAAA')
     leaf2.graph.count('AAAAT')
@@ -252,7 +271,7 @@ def test_simple():
     leaf5.graph.count('AAAAA')
     leaf5.graph.count('AAAAT')
     leaf5.graph.count('GAAAA')
-    
+
     root.add_node(leaf1)
     root.add_node(leaf2)
     root.add_node(leaf3)
@@ -292,7 +311,7 @@ def test_longer_search():
     leaf1.graph.count('AAAAA')
     leaf1.graph.count('AAAAT')
     leaf1.graph.count('AAAAC')
-    
+
     leaf2 = Leaf("b", factory.create_nodegraph())
     leaf2.graph.count('AAAAA')
     leaf2.graph.count('AAAAT')
@@ -312,7 +331,7 @@ def test_longer_search():
     leaf5.graph.count('AAAAA')
     leaf5.graph.count('AAAAT')
     leaf5.graph.count('GAAAA')
-    
+
     root.add_node(leaf1)
     root.add_node(leaf2)
     root.add_node(leaf3)
@@ -331,7 +350,7 @@ def test_longer_search():
 
     try1 = [ x.metadata for x in root.find(search_transcript, "AAAAT", 1.0) ]
     assert set(try1) == set([ 'a', 'b', 'c', 'e' ]), try1 # no 'd'
-    
+
     try2 = [ x.metadata for x in root.find(search_transcript, "GAAAAAT", 0.6) ]
     assert set(try2) == set([ 'a', 'b', 'c', 'd', 'e' ])
 
