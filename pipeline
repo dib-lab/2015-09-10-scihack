@@ -43,7 +43,9 @@ def main():
 
     for key, row in sample_df.iterrows():
         tasks.append(get_download_task(URL + row.label + '.fq.gz', row.label + '.fq.gz'))
+        tasks.append(get_download_task(URL + row.label + '.50000.fq.gz', row.label + '.50000.fq.gz'))
         tasks.append(get_gunzip_task(row.label + '.fq.gz', row.label + '.fq'))
+        tasks.append(get_gunzip_task(row.label + '.50000.fq.gz', row.label + '.50000.fq'))
 
     if args.print_tasks:
         for task in tasks:

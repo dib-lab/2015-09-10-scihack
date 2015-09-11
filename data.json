@@ -1,17 +1,4 @@
 {
-    "614GMAAXX_1_1_pf": {
-        "access": "local_file",
-        "condition": "stg18",
-        "db_type": "nucl",
-        "filename": "614GMAAXX_1_1_pf.qc.fq.gz",
-        "flowcell": "614GM",
-        "label": "embryo_stg18_614GM",
-        "meta_type": "sample",
-        "paired": false,
-        "phred": "phred33",
-        "strand": "+/-",
-        "tissue": "embryo"
-    },
     "AI": {
         "access": "local_file",
         "condition": "adult",

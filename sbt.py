@@ -130,11 +130,13 @@ class Leaf(object):
 
 def print_sbt(node):
 
+    fpr = khmer.calc_expected_collisions(node.graph, False)
+
     if type(node) is Leaf:
-        print 'Leaf:', node.metadata, node.graph.n_occupied()
+        print 'Leaf:', node.metadata, node.graph.n_occupied(), fpr
 
     else:
-        print 'Internal node:', node.children, node.graph.n_occupied()
+        print 'Internal node:', node.children, node.graph.n_occupied(), fpr
         print_sbt(node.subnodes[0])
         print_sbt(node.subnodes[1])
 
