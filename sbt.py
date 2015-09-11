@@ -130,7 +130,7 @@ class Leaf(object):
 
 def print_sbt(node):
 
-    fpr = khmer.calc_expected_collisions(node.graph, False)
+    fpr = khmer.calc_expected_collisions(node.graph, True)
 
     if type(node) is Leaf:
         print 'Leaf:', node.metadata, node.graph.n_occupied(), fpr
