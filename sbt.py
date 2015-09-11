@@ -188,16 +188,16 @@ def save_node(node, structure, tag):
         f.close()
 
         # move tmp file to new place
-        shutil.move(f.ame, os.path.join(".sbt", fname))
+        shutil.move(f.name, os.path.join(".sbt", fname))
 
-    structure['bf'] = os.path.join('.sbt', fname)
-    structure['children'] = node.children
-
-    if type(node) is not Leaf:
         structure['left'] = {}
         save_node(node.subnodes[0], structure['left'], tag)
         structure['right'] = {}
         save_node(node.subnodes[1], structure['right'], tag)
+
+    structure['bf'] = os.path.join('.sbt', fname)
+    structure['children'] = node.children
+
 
 def save_sbt(root_node, tag):
 
