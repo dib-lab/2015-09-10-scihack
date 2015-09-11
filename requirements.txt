@@ -1,0 +1,4 @@
+doit==0.29.0
+khmer==2.0
+pandas==0.16.2
+screed==0.9
