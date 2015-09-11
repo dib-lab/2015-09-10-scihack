@@ -45,6 +45,7 @@ then define a search function, ::
         return 0
 """
 
+import hashlib
 import random
 import json
 
@@ -66,10 +67,18 @@ class GraphFactory(object):
 class Node(object):
     "Internal node of SBT; has 0, 1, or 2 children."
 
-    def __init__(self, factory):
+    n_nodes = 0
+
+    def __init__(self, factory, name=None):
         self.factory = factory
         self.graph = factory.create_nodegraph()
         self.children = 0
+        
+        if name is None:
+            self.name = 'internal.' + str(Node.n_nodes)
+        else:
+            self.name = name
+        Node.n_nodes += 1
         
         self.subnodes = []
 
@@ -117,9 +126,16 @@ class Node(object):
                 x.extend(n.find(search_fn, *args))
             return x
 
+    def __str__(self):
+        return '*Node:{name} [{nb},{fpr}]'.format(
+                name=self.name, nb=self.graph.n_occupied(),
+                fpr=khmer.calc_expected_collisions(self.graph, True, 1.1))
+
+
 class Leaf(object):
-    def __init__(self, metadata, nodegraph):
+    def __init__(self, metadata, name, nodegraph):
         self.metadata = metadata
+        self.name = name
         self.graph = nodegraph
         self.children = 0
 
@@ -128,30 +144,29 @@ class Leaf(object):
             return [self]
         return []
 
+    def __str__(self):
+        return '**Leaf:{name} [{nb},{fpr}]\n\t{metadata}'.format(
+                name=self.name, metadata=self.metadata,
+                nb=self.graph.n_occupied(),
+                fpr=khmer.calc_expected_collisions(self.graph, True, 1.1))
+
 def print_sbt(node):
 
-    fpr = khmer.calc_expected_collisions(node.graph, True)
+    print node
 
-    if type(node) is Leaf:
-        print 'Leaf:', node.metadata, node.graph.n_occupied(), fpr
-
-    else:
-        print 'Internal node:', node.children, node.graph.n_occupied(), fpr
+    if type(node) is Node:
         print_sbt(node.subnodes[0])
         print_sbt(node.subnodes[1])
 
-def node_name(node, tag):
-    if type(node) is Leaf:
-        name = node.metadata
-    else:
-        name = str(id(node))
-    return '.'.join([tag, name, 'sbt'])
+def node_fn(node, tag):
+    return '.'.join([tag, node.name, 'sbt'])
 
 def save_node(node, structure, tag):
 
-    name = node_name(node, tag)
-    node.graph.save(name)
-    structure['name'] = name
+    filename = node_fn(node, tag)
+    node.graph.save(filename)
+    structure['filename'] = filename
+    structure['name'] = node.name
     structure['children'] = node.children
 
     if type(node) is Leaf:
@@ -182,7 +197,7 @@ def load_sbt(sbt_fn):
     with open(sbt_fn) as fp:
        sbt_dict = json.load(fp)
 
-    ksize, tablesize, ntables, _, _, _ = khmer.extract_nodegraph_info(sbt_dict['root']['name'])
+    ksize, tablesize, ntables, _, _, _ = khmer.extract_nodegraph_info(sbt_dict['root']['filename'])
     factory = GraphFactory(ksize, tablesize, ntables)
 
     tree = load_node(sbt_dict['root'], factory)
@@ -191,10 +206,10 @@ def load_sbt(sbt_fn):
 
 def load_node(node_dict, factory):
 
-    graph = khmer.load_nodegraph(node_dict['name'])
+    graph = khmer.load_nodegraph(node_dict['filename'])
 
     if 'metadata' in node_dict: # must be a leaf
-        return Leaf(node_dict['metadata'], graph)
+        return Leaf(node_dict['metadata'], node_dict['name'], graph)
         
     else:
         node = Node(factory)
@@ -206,6 +221,7 @@ def load_node(node_dict, factory):
         node.subnodes.append(load_node(right, factory))
 
         node.children = node_dict['children']
+        node.name = node_dict['name']
         return node
 
 def test_simple():
