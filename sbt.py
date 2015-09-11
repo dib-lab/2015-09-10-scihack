@@ -150,6 +150,7 @@ def save_node(node, structure, tag):
     name = node_name(node, tag)
     node.graph.save(name)
     structure['name'] = name
+    structure['children'] = node.children
 
     if type(node) is Leaf:
 
@@ -195,11 +196,14 @@ def load_node(node_dict, factory):
         
     else:
         node = Node(factory)
+        node.graph = graph
+
         left = node_dict['left']
         node.subnodes.append(load_node(left, factory))
         right = node_dict['right']
         node.subnodes.append(load_node(right, factory))
-        node.children = 2
+
+        node.children = node_dict['children']
         return node
 
 def test_simple():
