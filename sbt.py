@@ -109,6 +109,7 @@ class Node(object):
             n = Node(self.factory)
             n.add_node(node)
             n.add_node(subn)
+            n.children += 2
 
             # add new child node to ourselves
             self.subnodes.append(n)
