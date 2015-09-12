@@ -26,6 +26,7 @@ def main():
     parser.add_argument('--assembly', nargs='+')
     parser.add_argument('--threshold', type=float, default=0.9)
     parser.add_argument('--print-tree', action='store_true', default=False)
+    parser.add_argument('--print-tree-dot', action='store_true', default=False)
     args = parser.parse_args()
     
     # Load the Sequence Bloom Tree
@@ -50,6 +51,9 @@ def main():
 
     if args.print_tree:
         sbt.print_sbt(tree)
+
+    if args.print_tree_dot:
+        sbt.print_sbt_dot(tree)
 
 if __name__ == '__main__':
     main()
