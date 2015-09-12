@@ -166,23 +166,23 @@ def print_sbt(node):
 
 def print_sbt_dot(node):
 
-    print """
+    print("""
     digraph G {
     nodesep=0.3;
     ranksep=0.2;
     margin=0.1;
     node [shape=circle];
     edge [arrowsize=0.8];
-    """
+    """)
 
     if type(node) is Node:
         print_dot_node(node.subnodes[0], node)
         print_dot_node(node.subnodes[1], node)
 
-    print "}"
+    print("}")
 
 def print_dot_node(node, parent):
-    print '"', parent.name, '"', '->', '"', node.name, '";'
+    print ('"', parent.name, '"', '->', '"', node.name, '";')
 
     if type(node) is Node:
         print_dot_node(node.subnodes[0], node)
