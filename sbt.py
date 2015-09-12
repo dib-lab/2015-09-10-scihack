@@ -242,8 +242,7 @@ def filter_distance( filter_a, filter_b, n=1000 ) :
         a = array( q, copy=False )
         b = array( p, copy=False )
         for i in map( lambda x : randint( 0, len(a) ), range(n) ) :
-            distance += sum( map( int, [
-                                         not bool((a[i]>>j)&1)
+            distance += sum( map( int, [ not bool((a[i]>>j)&1)
                                            ^ bool((b[i]>>j)&1)
                                          for j in range(8) ] ) )
     return distance / ( 8.0 * len(A) * n )
