@@ -47,10 +47,11 @@ def main():
     for sample_fn in args.samples:
         print('*** Build node for', sample_fn)
         leaf = sbt.Leaf(os.path.basename(sample_fn),
-                        os.path.basename(sample_fn),
                         factory.create_nodegraph())
         fname = os.path.join('.sbt.' + args.save_prefix,
-                             ".".join([args.save_prefix, os.path.basename(sample_fn), 'sbt']))
+                             ".".join([args.save_prefix,
+                                       os.path.basename(sample_fn),
+                                       'sbt']))
         if os.path.exists(fname):
             print('--- Loading existing file...')
             leaf.graph.load(fname)

@@ -141,8 +141,10 @@ class Node(object):
 
 
 class Leaf(object):
-    def __init__(self, metadata, name, nodegraph):
+    def __init__(self, metadata, nodegraph, name=None):
         self.metadata = metadata
+        if name is None:
+            name = metadata
         self.name = name
         self.graph = nodegraph
         self.children = 0
@@ -282,7 +284,7 @@ def filter_distance( filter_a, filter_b, n=1000 ) :
     return distance / ( 8.0 * len(A) * n )
 
 def test_simple():
-    factory = GraphFactory(5, [101, 103, 117])
+    factory = GraphFactory(5, 100, 3)
     root = Node(factory)
 
     leaf1 = Leaf("a", factory.create_nodegraph())
@@ -342,7 +344,7 @@ def test_simple():
 
 def test_longer_search():
     ksize = 5
-    factory = GraphFactory(ksize, [101, 103, 117])
+    factory = GraphFactory(ksize, 100, 3)
     root = Node(factory)
 
     leaf1 = Leaf("a", factory.create_nodegraph())
