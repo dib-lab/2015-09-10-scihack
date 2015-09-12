@@ -259,30 +259,30 @@ def load_node(node_dict, factory):
         return node
 
 def test_simple():
-    factory = GraphFactory(5, [101, 103, 117])
+    factory = GraphFactory(5, 100, 3)
     root = Node(factory)
 
-    leaf1 = Leaf("a", factory.create_nodegraph())
+    leaf1 = Leaf("a", "a", factory.create_nodegraph())
     leaf1.graph.count('AAAAA')
     leaf1.graph.count('AAAAT')
     leaf1.graph.count('AAAAC')
 
-    leaf2 = Leaf("b", factory.create_nodegraph())
+    leaf2 = Leaf("b", "b", factory.create_nodegraph())
     leaf2.graph.count('AAAAA')
     leaf2.graph.count('AAAAT')
     leaf2.graph.count('AAAAG')
 
-    leaf3 = Leaf("c", factory.create_nodegraph())
+    leaf3 = Leaf("c", "c", factory.create_nodegraph())
     leaf3.graph.count('AAAAA')
     leaf3.graph.count('AAAAT')
     leaf3.graph.count('CAAAA')
 
-    leaf4 = Leaf("d", factory.create_nodegraph())
+    leaf4 = Leaf("d", "d", factory.create_nodegraph())
     leaf4.graph.count('AAAAA')
     leaf4.graph.count('CAAAA')
     leaf4.graph.count('GAAAA')
 
-    leaf5 = Leaf("e", factory.create_nodegraph())
+    leaf5 = Leaf("e", "e", factory.create_nodegraph())
     leaf5.graph.count('AAAAA')
     leaf5.graph.count('AAAAT')
     leaf5.graph.count('GAAAA')
@@ -319,30 +319,30 @@ def test_simple():
 
 def test_longer_search():
     ksize = 5
-    factory = GraphFactory(ksize, [101, 103, 117])
+    factory = GraphFactory(ksize, 100, 3)
     root = Node(factory)
 
-    leaf1 = Leaf("a", factory.create_nodegraph())
+    leaf1 = Leaf("a", "a", factory.create_nodegraph())
     leaf1.graph.count('AAAAA')
     leaf1.graph.count('AAAAT')
     leaf1.graph.count('AAAAC')
 
-    leaf2 = Leaf("b", factory.create_nodegraph())
+    leaf2 = Leaf("b", "b", factory.create_nodegraph())
     leaf2.graph.count('AAAAA')
     leaf2.graph.count('AAAAT')
     leaf2.graph.count('AAAAG')
 
-    leaf3 = Leaf("c", factory.create_nodegraph())
+    leaf3 = Leaf("c", "c", factory.create_nodegraph())
     leaf3.graph.count('AAAAA')
     leaf3.graph.count('AAAAT')
     leaf3.graph.count('CAAAA')
 
-    leaf4 = Leaf("d", factory.create_nodegraph())
+    leaf4 = Leaf("d", "d", factory.create_nodegraph())
     leaf4.graph.count('AAAAA')
     leaf4.graph.count('CAAAA')
     leaf4.graph.count('GAAAA')
 
-    leaf5 = Leaf("e", factory.create_nodegraph())
+    leaf5 = Leaf("e", "e", factory.create_nodegraph())
     leaf5.graph.count('AAAAA')
     leaf5.graph.count('AAAAT')
     leaf5.graph.count('GAAAA')
