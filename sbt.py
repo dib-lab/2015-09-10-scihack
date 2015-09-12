@@ -56,6 +56,8 @@ from tempfile import NamedTemporaryFile
 
 import khmer
 from khmer import khmer_args
+from random import randint
+from numpy import array
 
 class GraphFactory(object):
     "Build new nodegraphs (Bloom filters) of a specific (fixed) size."
@@ -257,6 +259,27 @@ def load_node(node_dict, factory):
         node.children = node_dict['children']
         node.name = node_dict['name']
         return node
+
+def filter_distance( filter_a, filter_b, n=1000 ) :
+    """
+    Compute a heuristic distance per bit between two Bloom
+    filters.
+    
+    filter_a : First filter
+    filter_b : Second filter
+    n        : Number of positions to compare (in groups of 8)
+    """
+    A = filter_a.graph.get_raw_tables()
+    B = filter_b.graph.get_raw_tables()
+    distance = 0
+    for q,p in zip( A, B ) :
+        a = array( q, copy=False )
+        b = array( p, copy=False )
+        for i in map( lambda x : randint( 0, len(a) ), range(n) ) :
+            distance += sum( map( int, [ not bool((a[i]>>j)&1)
+                                           ^ bool((b[i]>>j)&1)
+                                         for j in range(8) ] ) )
+    return distance / ( 8.0 * len(A) * n )
 
 def test_simple():
     factory = GraphFactory(5, [101, 103, 117])
