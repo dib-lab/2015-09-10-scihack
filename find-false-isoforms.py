@@ -42,7 +42,7 @@ def main():
 
     for fn in args.assembly:
         with open(fn + '.good', 'wb') as good_fp, open(fn + '.bad', 'wb') as bad_fp:
-            print '*** Searching', fn
+            print('*** Searching', fn)
             n_good = 0
             n_bad = 0
             for record in screed.open(fn):
@@ -55,7 +55,7 @@ def main():
                 else:
                     n_bad += 1
                     bad_fp.write('>{name}\n{seq}'.format(name=record.name, seq=record.sequence))
-            print n_good, 'good', n_bad, 'bad transcripts'
+            print(n_good, 'good', n_bad, 'bad transcripts')
 
 if __name__ == '__main__':
     main()
