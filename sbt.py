@@ -182,7 +182,7 @@ def print_sbt_dot(node):
     print("}")
 
 def print_dot_node(node, parent):
-    print ('"', parent.name, '"', '->', '"', node.name, '";')
+    print('"', parent.name, '"', '->', '"', node.name, '";')
 
     if type(node) is Node:
         print_dot_node(node.subnodes[0], node)
