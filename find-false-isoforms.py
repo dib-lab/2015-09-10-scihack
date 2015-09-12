@@ -27,13 +27,13 @@ def main():
     parser.add_argument('--threshold', type=float, default=0.9)
     parser.add_argument('--print-tree', action='store_true', default=False)
     args = parser.parse_args()
-    
+
     # Load the Sequence Bloom Tree
     tree = sbt.load_sbt(args.sbt_file)
 
     for fn in args.assembly:
         with open(fn + '.good', 'wb') as good_fp, open(fn + '.bad', 'wb') as bad_fp:
-            print '*** Searching', fn
+            print('*** Searching', fn)
             n_good = 0
             n_bad = 0
             for record in screed.open(fn):
@@ -46,7 +46,7 @@ def main():
                 else:
                     n_bad += 1
                     bad_fp.write('>{name}\n{seq}'.format(name=record.name, seq=record.sequence))
-            print n_good, 'good', n_bad, 'bad transcripts'
+            print(n_good, 'good', n_bad, 'bad transcripts')
 
     if args.print_tree:
         sbt.print_sbt(tree)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import argparse
 import os
 import sys
@@ -36,35 +38,35 @@ def main():
     args = parser.parse_args()
 
     if not args.save_prefix:
-        print >>sys.stderr, 'No save prefix specified! Exiting...'
+        print('No save prefix specified! Exiting...', file=sys.stderr)
         sys.exit(1)
 
     factory = NodegraphFactory(args)
     root = sbt.Node(factory)
 
     for sample_fn in args.samples:
-        print '*** Build node for', sample_fn
+        print('*** Build node for', sample_fn)
         leaf = sbt.Leaf(os.path.basename(sample_fn),
                         os.path.basename(sample_fn),
                         factory.create_nodegraph())
         fname = os.path.join('.sbt.' + args.save_prefix,
                              ".".join([args.save_prefix, os.path.basename(sample_fn), 'sbt']))
         if os.path.exists(fname):
-            print '--- Loading existing file...'
+            print('--- Loading existing file...')
             leaf.graph.load(fname)
         else:
-            print '--- Consuming file...'
+            print('--- Consuming file...')
             leaf.graph.consume_fasta(sample_fn)
-        print '--- Adding node to SBT...'
+        print('--- Adding node to SBT...')
         root.add_node(leaf)
-        print '--- Done with', sample_fn
+        print('--- Done with', sample_fn)
 
     if args.print_tree:
         sbt.print_sbt(root)
 
-    print '\n*** Saving to disk'
+    print('\n*** Saving to disk')
     fn = sbt.save_sbt(root, args.save_prefix)
-    print '--- Save to', fn
+    print('--- Save to', fn)
 
 if __name__ == '__main__':
     main()

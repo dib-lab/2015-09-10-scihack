@@ -45,6 +45,8 @@ then define a search function, ::
         return 0
 """
 
+from __future__ import print_function, unicode_literals
+
 import hashlib
 import json
 import os
@@ -156,7 +158,7 @@ class Leaf(object):
 
 def print_sbt(node):
 
-    print node
+    print(node)
 
     if type(node) is Node:
         print_sbt(node.subnodes[0])
@@ -194,7 +196,7 @@ def save_sbt(root_node, tag):
     structure['size'] = root_node.children + 1
 
     fn = tag + '.sbt.json'
-    with open(fn, 'wb') as fp:
+    with open(fn, 'w') as fp:
         json.dump(structure, fp)
 
     return fn
@@ -283,12 +285,12 @@ def test_simple():
     for kmer in kmers:
         assert set(root.find(search_kmer, kmer)) == search_kmer_in_list(kmer)
 
-    print '-----'
-    print [ x.metadata for x in root.find(search_kmer, "AAAAA") ]
-    print [ x.metadata for x in root.find(search_kmer, "AAAAT") ]
-    print [ x.metadata for x in root.find(search_kmer, "AAAAG") ]
-    print [ x.metadata for x in root.find(search_kmer, "CAAAA") ]
-    print [ x.metadata for x in root.find(search_kmer, "GAAAA") ]
+    print('-----')
+    print([ x.metadata for x in root.find(search_kmer, "AAAAA") ])
+    print([ x.metadata for x in root.find(search_kmer, "AAAAT") ])
+    print([ x.metadata for x in root.find(search_kmer, "AAAAG") ])
+    print([ x.metadata for x in root.find(search_kmer, "CAAAA") ])
+    print([ x.metadata for x in root.find(search_kmer, "GAAAA") ])
 
 def test_longer_search():
     ksize = 5
