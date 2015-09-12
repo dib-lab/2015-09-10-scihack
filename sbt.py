@@ -162,6 +162,31 @@ def print_sbt(node):
         print_sbt(node.subnodes[0])
         print_sbt(node.subnodes[1])
 
+def print_sbt_dot(node):
+
+    print """
+    digraph G {
+    nodesep=0.3;
+    ranksep=0.2;
+    margin=0.1;
+    node [shape=circle];
+    edge [arrowsize=0.8];
+    """
+
+    if type(node) is Node:
+        print_dot_node(node.subnodes[0], node)
+        print_dot_node(node.subnodes[1], node)
+
+    print "}"
+
+def print_dot_node(node, parent):
+    print '"', parent.name, '"', '->', '"', node.name, '";'
+
+    if type(node) is Node:
+        print_dot_node(node.subnodes[0], node)
+        print_dot_node(node.subnodes[1], node)
+
+
 def node_fn(node, tag):
     return os.path.join('.sbt.' + tag,
                         '.'.join([tag, node.name, 'sbt']))

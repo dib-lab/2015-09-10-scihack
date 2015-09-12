@@ -26,10 +26,19 @@ def main():
     parser.add_argument('--assembly', nargs='+')
     parser.add_argument('--threshold', type=float, default=0.9)
     parser.add_argument('--print-tree', action='store_true', default=False)
+    parser.add_argument('--print-tree-dot', action='store_true', default=False)
     args = parser.parse_args()
-    
+
     # Load the Sequence Bloom Tree
-    tree = sbt.load_sbt(args.sbt_file)
+    tree = sbt.load_sbt(args.sbt)
+
+    if args.print_tree:
+        sbt.print_sbt(tree)
+        sys.exit(0)
+
+    if args.print_tree_dot:
+        sbt.print_sbt_dot(tree)
+        sys.exit(0)
 
     for fn in args.assembly:
         with open(fn + '.good', 'wb') as good_fp, open(fn + '.bad', 'wb') as bad_fp:
@@ -47,9 +56,6 @@ def main():
                     n_bad += 1
                     bad_fp.write('>{name}\n{seq}'.format(name=record.name, seq=record.sequence))
             print n_good, 'good', n_bad, 'bad transcripts'
-
-    if args.print_tree:
-        sbt.print_sbt(tree)
 
 if __name__ == '__main__':
     main()
