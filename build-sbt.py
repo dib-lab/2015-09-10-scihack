@@ -42,7 +42,7 @@ def main():
         sys.exit(1)
 
     factory = NodegraphFactory(args)
-    root = sbt.Node(factory)
+    tree = sbt.SBT(factory)
 
     for sample_fn in args.samples:
         print('*** Build node for', sample_fn)
@@ -59,14 +59,14 @@ def main():
             print('--- Consuming file...')
             leaf.graph.consume_fasta(sample_fn)
         print('--- Adding node to SBT...')
-        root.add_node(leaf)
+        tree.add_node(leaf)
         print('--- Done with', sample_fn)
 
     if args.print_tree:
-        sbt.print_sbt(root)
+        sbt.print_sbt(tree)
 
     print('\n*** Saving to disk')
-    fn = sbt.save_sbt(root, args.save_prefix)
+    fn = tree.save(args.save_prefix)
     print('--- Save to', fn)
 
 if __name__ == '__main__':

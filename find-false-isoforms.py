@@ -30,14 +30,14 @@ def main():
     args = parser.parse_args()
 
     # Load the Sequence Bloom Tree
-    tree = sbt.load_sbt(args.sbt)
+    tree = sbt.SBT.load(args.sbt)
 
-    if args.print_tree:
-        sbt.print_sbt(tree)
-        sys.exit(0)
+#    if args.print_tree:
+#        sbt.print_sbt(tree)
+#        sys.exit(0)
 
     if args.print_tree_dot:
-        sbt.print_sbt_dot(tree)
+        tree.print_dot()
         sys.exit(0)
 
     for fn in args.assembly:
