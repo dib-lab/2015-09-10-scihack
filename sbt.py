@@ -47,8 +47,10 @@ then define a search function, ::
 
 from __future__ import print_function, unicode_literals
 
+from collections import namedtuple
 import hashlib
 import json
+import math
 import os
 import random
 import shutil
@@ -58,6 +60,10 @@ import khmer
 from khmer import khmer_args
 from random import randint
 from numpy import array
+
+
+NodePos = namedtuple("NodePos", ["pos", "node"])
+
 
 class GraphFactory(object):
     "Build new nodegraphs (Bloom filters) of a specific (fixed) size."
@@ -71,68 +77,183 @@ class GraphFactory(object):
         return khmer.Nodegraph(self.ksize, self.starting_size, self.n_tables)
 
 
+class SBT(object):
+
+    def __init__(self, factory):
+        self.factory = factory
+        self.nodes = [None]
+
+    def add_node(self, node):
+        try:
+            pos = self.nodes.index(None)
+        except ValueError:
+            # There aren't any empty positions left.
+            # Extend array
+            current_size = len(self.nodes)
+            self.nodes += [None] * (current_size + 1)
+            pos = current_size
+
+        if pos == 0:  # empty tree
+            self.nodes[0] = node
+            return
+
+        p = self.parent(pos)
+        c1, c2 = self.children(p.pos)
+        if isinstance(p.node, Leaf):
+            # Create a new internal node
+            # node and parent are children of new internal node
+            n = Node(self.factory, name="internal." + str(p.pos))
+            self.nodes[p.pos] = n
+
+            self.nodes[c1.pos] = p.node
+            self.nodes[c2.pos] = node
+
+            n.graph.update(p.node.graph)
+            n.graph.update(node.graph)
+
+            # update all parents!
+            p = self.parent(p.pos)
+            while p:
+                p.node.graph.update(node.graph)
+                p = self.parent(p.pos)
+
+            return
+
+        # Doing this this way always return that parent node is a Leaf,
+        # so this piece of code is not necessary
+#        if isinstance(p.node, Node):
+#            # Parent node can accommodate a new child.
+#            p.node.graph.update(node.graph)
+#            if self.nodes[c1.pos] is None:
+#                self.nodes[c1.pos] = node
+#            elif self.nodes[c2.pos] is None:
+#                self.nodes[c2.pos] = node
+
+    def find(self, search_fn, *args):
+        matches = []
+        visited, queue = set(), [0]
+        while queue:
+            node_p = queue.pop(0)
+            node_g = self.nodes[node_p]
+            if node_p not in visited and node_g is not None:
+                visited.add(node_p)
+                if search_fn(node_g, *args):
+                    if isinstance(node_g, Leaf):
+                        matches.append(node_g)
+                    elif isinstance(node_g, Node):
+                        queue.extend(c.pos for c in self.children(node_p))
+        return matches
+
+    def parent(self, pos):
+        if pos == 0:
+            return None
+        p = int(math.floor((pos - 1) / 2))
+        return NodePos(p, self.nodes[p])
+
+    def children(self, pos):
+        c1 = 2 * pos + 1
+        c2 = 2 * (pos + 1)
+        return (NodePos(c1, self.nodes[c1]),
+                NodePos(c2, self.nodes[c2]))
+
+    def save(self, tag):
+        dirname = '.sbt.' + tag
+
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        structure = []
+        for node in self.nodes:
+            if node is None:
+                structure.append(None)
+                continue
+
+            data = {
+                'filename': os.path.join('.sbt.' + tag,
+                                         '.'.join([tag, node.name, 'sbt']))
+            }
+            if isinstance(node, Leaf):
+                data['metadata'] = node.metadata
+
+            node.graph.save(data['filename'])
+            structure.append(data)
+
+        fn = tag + '.sbt.json'
+        with open(fn, 'w') as fp:
+            json.dump(structure, fp)
+
+        return fn
+
+    @staticmethod
+    def load(sbt_fn):
+        with open(sbt_fn) as fp:
+            nodes = json.load(fp)
+
+        if nodes[0] is None:
+            # TODO error!
+            raise ValueError("Empty tree!")
+
+        sbt_nodes = []
+
+        ksize, tablesize, ntables, _, _, _ = khmer.extract_nodegraph_info(nodes[0]['filename'])
+        factory = GraphFactory(ksize, tablesize, ntables)
+
+        for node in nodes:
+            if node is None:
+                sbt_nodes.append(None)
+                continue
+
+            graph = khmer.load_nodegraph(node['filename'])
+
+            if 'metadata' in node:
+                # only Leaf nodes have metadata
+                l = Leaf(node['metadata'], graph)
+                sbt_nodes.append(l)
+            else:
+                n = Node(factory)
+                n.graph = graph
+                sbt_nodes.append(n)
+
+        tree = SBT(factory)
+        tree.nodes = sbt_nodes
+
+        return tree
+
+    def print_dot(self):
+        print("""
+        digraph G {
+        nodesep=0.3;
+        ranksep=0.2;
+        margin=0.1;
+        node [shape=circle];
+        edge [arrowsize=0.8];
+        """)
+
+        for i, node in enumerate(self.nodes):
+            if node is None:
+                continue
+
+            p = self.parent(i)
+            if p is not None:
+                if isinstance(node, Leaf):
+                    print('"', p.pos, '"', '->', '"', node.name, '";')
+                else:
+                    print('"', p.pos, '"', '->', '"', i, '";')
+        print("}")
+
+
 class Node(object):
     "Internal node of SBT; has 0, 1, or 2 children."
-
-    n_nodes = 0
 
     def __init__(self, factory, name=None):
         self.factory = factory
         self.graph = factory.create_nodegraph()
-        self.children = 0
 
-        if name is None:
-            self.name = 'internal.' + str(Node.n_nodes)
-        else:
-            self.name = name
-        Node.n_nodes += 1
-
-        self.subnodes = []
-
-    def add_node(self, node):
-        # do we have room for another child? if so, add.
-        if len(self.subnodes) < 2:
-            self.subnodes.append(node)
-            self.graph.update(node.graph)
-            self.children += 1
-        # nope - insert a new node.
-        else:
-            if self.subnodes[0].children == self.subnodes[1].children:
-                subn = random.choice(self.subnodes)
-            elif self.subnodes[0].children < self.subnodes[1].children:
-                subn = self.subnodes[0]
-            else:
-                subn = self.subnodes[1]
-
-            ## push child down one level in the tree ##
-
-            # remove from immediate:
-            self.subnodes.remove(subn)
-
-            # create new child node & fill:
-            n = Node(self.factory)
-            n.add_node(node)
-            n.add_node(subn)
-            n.children += 2
-
-            # add new child node to ourselves
-            self.subnodes.append(n)
-
-            # don't forget to update from the new Bloom filter/nodegraph.
-            self.graph.update(node.graph)
-            # note: subn.graph is already included.
-
-            # lots more children.
-            self.children += 2
-
-    def find(self, search_fn, *args):
-        if not search_fn(self, *args):
-            return []
-        else:
-            x = []
-            for n in self.subnodes:
-                x.extend(n.find(search_fn, *args))
-            return x
+        self.name = name
+#        if name is None:
+#            self.name = 'internal.' + str(Node.n_nodes)
+#        else:
+#            self.name = name
 
     def __str__(self):
         return '*Node:{name} [{nb},{fpr}]'.format(
@@ -147,12 +268,6 @@ class Leaf(object):
             name = metadata
         self.name = name
         self.graph = nodegraph
-        self.children = 0
-
-    def find(self, search_fn, *args):
-        if search_fn(self, *args):
-            return [self]
-        return []
 
     def __str__(self):
         return '**Leaf:{name} [{nb},{fpr}]\n\t{metadata}'.format(
@@ -160,113 +275,12 @@ class Leaf(object):
                 nb=self.graph.n_occupied(),
                 fpr=khmer.calc_expected_collisions(self.graph, True, 1.1))
 
-def print_sbt(node):
-
-    print(node)
-
-    if type(node) is Node:
-        print_sbt(node.subnodes[0])
-        print_sbt(node.subnodes[1])
-
-def print_sbt_dot(node):
-
-    print("""
-    digraph G {
-    nodesep=0.3;
-    ranksep=0.2;
-    margin=0.1;
-    node [shape=circle];
-    edge [arrowsize=0.8];
-    """)
-
-    if type(node) is Node:
-        print_dot_node(node.subnodes[0], node)
-        print_dot_node(node.subnodes[1], node)
-
-    print("}")
-
-def print_dot_node(node, parent):
-    print('"', parent.name, '"', '->', '"', node.name, '";')
-
-    if type(node) is Node:
-        print_dot_node(node.subnodes[0], node)
-        print_dot_node(node.subnodes[1], node)
-
-
-def node_fn(node, tag):
-    return os.path.join('.sbt.' + tag,
-                        '.'.join([tag, node.name, 'sbt']))
-
-def save_node(node, structure, tag):
-    dirname = '.sbt.' + tag
-
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    filename = node_fn(node, tag)
-    node.graph.save(filename)
-    structure['filename'] = filename
-    structure['name'] = node.name
-    structure['children'] = node.children
-
-    if type(node) is Leaf:
-        structure['metadata'] = node.metadata
-    else:
-        structure['left'] = {}
-        save_node(node.subnodes[0], structure['left'], tag)
-        structure['right'] = {}
-        save_node(node.subnodes[1], structure['right'], tag)
-
-
-def save_sbt(root_node, tag):
-
-    structure = {'root': {}}
-    save_node(root_node, structure['root'], tag)
-    structure['size'] = root_node.children + 1
-
-    fn = tag + '.sbt.json'
-    with open(fn, 'w') as fp:
-        json.dump(structure, fp)
-
-    return fn
-
-def load_sbt(sbt_fn):
-
-    with open(sbt_fn) as fp:
-       sbt_dict = json.load(fp)
-
-    ksize, tablesize, ntables, _, _, _ = khmer.extract_nodegraph_info(sbt_dict['root']['filename'])
-    factory = GraphFactory(ksize, tablesize, ntables)
-
-    tree = load_node(sbt_dict['root'], factory)
-
-    return tree
-
-def load_node(node_dict, factory):
-
-    graph = khmer.load_nodegraph(node_dict['filename'])
-
-    if 'metadata' in node_dict: # must be a leaf
-        return Leaf(node_dict['metadata'], node_dict['name'], graph)
-
-    else:
-        node = Node(factory)
-        node.graph = graph
-
-        left = node_dict['left']
-        node.subnodes.append(load_node(left, factory))
-        right = node_dict['right']
-        node.subnodes.append(load_node(right, factory))
-
-        node.children = node_dict['children']
-        node.name = node_dict['name']
-        return node
 
 def filter_distance( filter_a, filter_b, n=1000 ) :
     """
     Compute a heuristic distance per bit between two Bloom
     filters.
-    
+
     filter_a : First filter
     filter_b : Second filter
     n        : Number of positions to compare (in groups of 8)
@@ -283,9 +297,10 @@ def filter_distance( filter_a, filter_b, n=1000 ) :
                                          for j in range(8) ] ) )
     return distance / ( 8.0 * len(A) * n )
 
+
 def test_simple():
     factory = GraphFactory(5, 100, 3)
-    root = Node(factory)
+    root = SBT(factory)
 
     leaf1 = Leaf("a", factory.create_nodegraph())
     leaf1.graph.count('AAAAA')
@@ -345,7 +360,7 @@ def test_simple():
 def test_longer_search():
     ksize = 5
     factory = GraphFactory(ksize, 100, 3)
-    root = Node(factory)
+    root = SBT(factory)
 
     leaf1 = Leaf("a", factory.create_nodegraph())
     leaf1.graph.count('AAAAA')
