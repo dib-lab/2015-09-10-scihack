@@ -63,7 +63,7 @@ def main():
         print('--- Done with', sample_fn)
 
     if args.print_tree:
-        sbt.print_sbt(tree)
+        tree.print()
 
     print('\n*** Saving to disk')
     fn = tree.save(args.save_prefix)

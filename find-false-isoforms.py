@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import argparse
 import os
 import sys
@@ -32,9 +34,9 @@ def main():
     # Load the Sequence Bloom Tree
     tree = sbt.SBT.load(args.sbt)
 
-#    if args.print_tree:
-#        sbt.print_sbt(tree)
-#        sys.exit(0)
+    if args.print_tree:
+        tree.print()
+        sys.exit(0)
 
     if args.print_tree_dot:
         tree.print_dot()

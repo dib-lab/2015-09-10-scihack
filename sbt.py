@@ -170,7 +170,8 @@ class SBT(object):
 
             data = {
                 'filename': os.path.join('.sbt.' + tag,
-                                         '.'.join([tag, node.name, 'sbt']))
+                                         '.'.join([tag, node.name, 'sbt'])),
+                'name': node.name
             }
             if isinstance(node, Leaf):
                 data['metadata'] = node.metadata
@@ -210,7 +211,7 @@ class SBT(object):
                 l = Leaf(node['metadata'], graph)
                 sbt_nodes.append(l)
             else:
-                n = Node(factory)
+                n = Node(factory, name=node['name'])
                 n.graph = graph
                 sbt_nodes.append(n)
 
@@ -241,6 +242,11 @@ class SBT(object):
                     print('"', p.pos, '"', '->', '"', i, '";')
         print("}")
 
+    def print(self):
+        for i, node in enumerate(self.nodes):
+            if node is not None:
+                print(node)
+
 
 class Node(object):
     "Internal node of SBT; has 0, 1, or 2 children."
@@ -250,10 +256,6 @@ class Node(object):
         self.graph = factory.create_nodegraph()
 
         self.name = name
-#        if name is None:
-#            self.name = 'internal.' + str(Node.n_nodes)
-#        else:
-#            self.name = name
 
     def __str__(self):
         return '*Node:{name} [{nb},{fpr}]'.format(
