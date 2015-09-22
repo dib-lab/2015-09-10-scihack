@@ -243,10 +243,17 @@ class SBT(object):
         print("}")
 
     def print(self):
-        for i, node in enumerate(self.nodes):
-            if node is not None:
-                print(node)
-
+        visited, stack = set(), [0]
+        while stack:
+            node_p = stack.pop()
+            node_g = self.nodes[node_p]
+            if node_p not in visited and node_g is not None:
+                visited.add(node_p)
+                depth = math.floor(math.log(node_p + 1, 2))
+                print(" " * 4 * depth, node_g)
+                if isinstance(node_g, Node):
+                    stack.extend(c.pos for c in self.children(node_p)
+                                       if c.pos not in visited)
 
 class Node(object):
     "Internal node of SBT; has 0, 1, or 2 children."
@@ -258,7 +265,7 @@ class Node(object):
         self.name = name
 
     def __str__(self):
-        return '*Node:{name} [{nb},{fpr}]'.format(
+        return '*Node:{name} [occupied: {nb}, fpr: {fpr:.2}]'.format(
                 name=self.name, nb=self.graph.n_occupied(),
                 fpr=khmer.calc_expected_collisions(self.graph, True, 1.1))
 
@@ -272,7 +279,7 @@ class Leaf(object):
         self.graph = nodegraph
 
     def __str__(self):
-        return '**Leaf:{name} [{nb},{fpr}]\n\t{metadata}'.format(
+        return '**Leaf:{name} [occupied: {nb}, fpr: {fpr:.2}] -> {metadata}'.format(
                 name=self.name, metadata=self.metadata,
                 nb=self.graph.n_occupied(),
                 fpr=khmer.calc_expected_collisions(self.graph, True, 1.1))
