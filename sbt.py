@@ -249,7 +249,7 @@ class SBT(object):
             node_g = self.nodes[node_p]
             if node_p not in visited and node_g is not None:
                 visited.add(node_p)
-                depth = math.floor(math.log(node_p + 1, 2))
+                depth = int(math.floor(math.log(node_p + 1, 2)))
                 print(" " * 4 * depth, node_g)
                 if isinstance(node_g, Node):
                     stack.extend(c.pos for c in self.children(node_p)
